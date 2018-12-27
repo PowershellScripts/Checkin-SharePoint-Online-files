@@ -18,14 +18,14 @@ param (
   $ctx.Credentials = New-Object Microsoft.SharePoint.Client.SharePointOnlineCredentials($Username, $password)
   $ctx.Load($ctx.Web)
   $ctx.ExecuteQuery()
-  $ll=$ctx.Web.Lists.GetByTitle($ListTitle)
+  $ll = $ctx.Web.Lists.GetByTitle($ListTitle)
   $ctx.Load($ll)
   $ctx.ExecuteQuery()
   $NumberOfItemsInTheList=$ll.ItemCount
-  $itemki=@()
+  $itemki = @()
   $spqQuery = New-Object Microsoft.SharePoint.Client.CamlQuery  
-  $spqQuery.ViewXml ="<View Scope='RecursiveAll' />";
-  $ViewThreshold=4000
+  $spqQuery.ViewXml = "<View Scope='RecursiveAll' />";
+  $ViewThreshold = 4000
 
   if($NumberOfItemsInTheList -gt $ViewThreshold)
   {
@@ -41,7 +41,6 @@ param (
 			"<Lt><FieldRef Name='ID'></FieldRef><Value Type='Number'>"+$endIndex+"</Value></Lt>"+
 		  "</And></Where></Query></View>"
        
- 
         Write-Host $spqQuery.ViewXml
         $partialItems=$ll.GetItems($spqQuery)
         $ctx.Load($partialItems)
@@ -60,18 +59,15 @@ param (
     $ctx.ExecuteQuery()
   }
 
-
   foreach($item in $itemki)
   {
-
         Write-Host "Verifying " $item["FileRef"] $item.ElementType "..."
   
   $file =
         $ctx.Web.GetFileByServerRelativeUrl($item["FileRef"]);
         $ctx.Load($file)
-        $ctx.Load($file.Versions)     
-        
-         $ctx.Load($file.ListItemAllFields)
+        $ctx.Load($file.Versions)             
+        $ctx.Load($file.ListItemAllFields)
         $Author=$file.Author
         $CheckedOutByUser=$file.CheckedOutByUser
         $LockedByUser=$file.LockedByUser
@@ -90,27 +86,25 @@ param (
         }
         catch
         {
-
+		#do nothing
         }
        
-       if($CheckedOutByUser.LoginName -ne $null){
-       Write-Host $file.Name "is checked out by" $CheckedOutByUser.LoginName
-       $file.CheckIn($CheckInComment, 'MajorCheckIn')
-  $ctx.Load($file)
-  try
-  {
-  $ctx.ExecuteQuery()        
-  Write-Host $file.Name " has been checked in"     -ForegroundColor DarkGreen 
-  }
-        catch [Net.WebException]
-     { 
-        Write-Host $_.Exception.ToString()
-     }
-       
-       }
-        
-
-        
+       if($CheckedOutByUser.LoginName -ne $null)
+       {
+	      Write-Host $file.Name "is checked out by" $CheckedOutByUser.LoginName
+	      $file.CheckIn($CheckInComment, 'MajorCheckIn')
+	      $ctx.Load($file)
+	      
+  		try
+  		{
+  		    $ctx.ExecuteQuery()        
+  		    Write-Host $file.Name " has been checked in"     -ForegroundColor DarkGreen 
+  		}
+        	catch [Net.WebException]
+     		{ 
+       		    Write-Host $_.Exception.ToString()
+     		}     
+       } 
      }   
   }
 
@@ -129,4 +123,4 @@ $CheckinComment="Checked in by Ana"
 
 
 
-Get-sPOFolderFiles -Username $username -Url $Url -password $AdminPassword -ListTitle $ListTitle -CheckInComment $CheckinComment
+Get-SPOFolderFiles -Username $username -Url $Url -password $AdminPassword -ListTitle $ListTitle -CheckInComment $CheckinComment
